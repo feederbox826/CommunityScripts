@@ -406,23 +406,25 @@ class Stash extends EventTarget {
             }`
         };
         const result = await this.callGQL(reqData);
-        const settings = result.data.configuration.plugins?.[pluginName]
-        return settings
+        return result.data.configuration.plugins?.[pluginName];
     }
-    async updateConfigValue(pluginName, settingName, value) {
-        const existingSettings = await getPluginSettings(pluginName);
-        existingSettings[settingName] = value;
+    async setPluginSettings(pluginName, settings) {
         const reqData = {
-            "operationName": "UpdateConfigValue",
+            "operationName": "ConfigurePlugin",
             "variables": {
-                "pluginID": pluginName,
-                "settings": JSON.stringify(existingSettings)
+                "plugin_id": pluginName,
+                "input": settings
             },
-            "query": `mutation UpdateConfigValue($pluginID: String!, $settings: String!) {
-                updateConfigValue(pluginID: $pluginID, settings: $settings)
+            "query": `mutation ConfigurePlugin($plugin_id: ID!, $input: Map!) {
+                configurePlugin(plugin_id: $plugin_id, input: $input)
             }`
         };
         return this.callGQL(reqData);
+    }
+    async updateConfigValue(pluginName, settingName, value) {
+        const existingSettings = await this.getPluginSettings(pluginName) ?? {};
+        existingSettings[settingName] = value;
+        return this.setPluginSettings(pluginName, existingSettings);
     }
     async getConfigValue(pluginName, settingName, fallback) {
         const settings = await this.getPluginSettings(pluginName);
