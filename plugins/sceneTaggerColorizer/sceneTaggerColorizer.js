@@ -325,18 +325,18 @@
 
     async function loadSettings() {
         for (const input of document.querySelectorAll(`#${colorizeConfigId} input[type="checkbox"]`)) {
-            input.checked = await stash.getValue(pluginName, input.id, input.dataset.default === 'true');
+            input.checked = await stash.getConfigValue(pluginName, input.id, input.dataset.default === 'true');
             input.addEventListener('change', async () => {
-                await stash.setValue(pluginName, input.id, input.checked);
+                await stash.updateConfigValue(pluginName, input.id, input.checked);
             });
         }
         for (const input of document.querySelectorAll(`#${colorizeConfigId} input[type="text"]`)) {
-            input.value = await stash.getValue(pluginName, input.id, input.dataset.default);
+            input.value = await stash.getConfigValue(pluginName, input.id, input.dataset.default);
             input.addEventListener('change', async () => {
                 const value = input.value.trim() || input.dataset.default;
                 input.value = value;
                 COLORS[input.id.replace('colorize-color-', '')] = value;
-                await stash.setValue(pluginName, input.id, value);
+                await stash.updateConfigValue(pluginName, input.id, value);
             });
         }
     }
