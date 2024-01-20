@@ -60,6 +60,7 @@ class Stash extends EventTarget {
             }));
         });
         this.getVersion()
+        this.loadConfiguration()
         this.settingsCallbacks = [];
         this.remoteScenes = {};
         this.scenes = {};
@@ -79,6 +80,17 @@ class Stash extends EventTarget {
         const data = await this.callGQL(reqData);
         const versionString = data.data.version.version;
         this.version = versionString.substring(1).split('.').map(o => parseInt(o));
+    }
+    async loadConfiguration() {
+        const reqData = {
+            "query": `query Configuration() {
+                configuration {
+                    plugins
+                }
+            }`
+        };
+        const data = await this.callGQL(reqData);
+        this.configuration = data.data?.configuration?.plugins ?? {};
     }
     async callGQL(reqData) {
         const options = {
@@ -396,17 +408,7 @@ class Stash extends EventTarget {
         }
     }
     async getPluginSettings(pluginName) {
-        const reqData = {
-            "operationName": "Configuration",
-            "variables": { "pluginID": pluginName },
-            "query": `query Configuration($pluginID: String!) {
-                configuration {
-                    plugins(include: [$pluginID])
-                }
-            }`
-        };
-        const result = await this.callGQL(reqData);
-        return result.data.configuration.plugins?.[pluginName];
+        return this.configuration[pluginName];
     }
     async setPluginSettings(pluginName, settings) {
         const reqData = {
@@ -419,7 +421,11 @@ class Stash extends EventTarget {
                 configurePlugin(plugin_id: $plugin_id, input: $input)
             }`
         };
-        return this.callGQL(reqData);
+        const data = await this.callGQL(reqData);
+        const pluginSettings = data.data?.configurePlugin;
+        if(pluginSettings) {
+            this.configuration[pluginName] = pluginSettings;
+        }
     }
     async updateConfigValue(pluginName, settingName, value) {
         const existingSettings = await this.getPluginSettings(pluginName) ?? {};
