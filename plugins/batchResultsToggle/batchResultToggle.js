@@ -281,9 +281,9 @@
 
     async function loadSettings() {
         for (const input of document.querySelectorAll(`#${resultToggleConfigId} input`)) {
-            input.checked = await stash.getValue(pluginName, input.id, input.dataset.default === 'true');
+            input.checked = await stash.getConfigValue(pluginName, input.id, input.dataset.default === 'true');
             input.addEventListener('change', async () => {
-                await stash.setValue(pluginName, input.id, input.checked);
+                await stash.updateConfigValue(pluginName, input.id, input.checked);
             });
         }
     }

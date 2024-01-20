@@ -114,7 +114,7 @@
 
     async function loadSettings() {
         for (const input of document.querySelectorAll(`#${batchSearchConfigId} input[type="text"]`)) {
-            input.value = parseInt(await stash.getValue(pluginName, input.id, input.dataset.default));
+            input.value = parseInt(await stash.getConfigValue(pluginName, input.id, input.dataset.default));
             delay = input.value;
             input.addEventListener('change', async () => {
                 let value = parseInt(input.value.trim())
@@ -123,7 +123,7 @@
                 }
                 input.value = value;
                 delay = value;
-                await stash.setValue(pluginName, input.id, value);
+                await stash.updateConfigValue(pluginName, input.id, value);
             });
         }
     }

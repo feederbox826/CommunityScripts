@@ -15,12 +15,17 @@
                 queryInput,
             } = stash.parseSearchItem(searchItem);
 
-            const includeStudio = document.getElementById('query-edit-include-studio').checked;
-            const includeDate = document.getElementById('query-edit-include-date').checked;
-            const includePerformers = document.querySelector('input[name="query-edit-include-performers"]:checked').value;
-            const includeTitle = document.getElementById('query-edit-include-title').checked;
-            const applyBlacklist = document.getElementById('query-edit-apply-blacklist').checked;
-            const useStashID = document.getElementById('query-edit-use-stashid').checked;
+            const form = document.getElementById('query-edit-config');
+            const {
+                includeStudio,
+                includeDate,
+                includePerformers,
+                includeTitle,
+                includeMovie,
+                includeSceneIndex,
+                applyBlacklist,
+                useStashID,
+            } = Object.fromEntries(new FormData(form).entries());
 
             const videoExtensionRegexes = videoExtensions.map(s => [new RegExp(`.${s}$`, "gi"), '']);
             const blacklist = [];
@@ -30,11 +35,11 @@
                 while (node = blacklistTags.iterateNext()) {
                     blacklist.push([new RegExp(node.nodeValue, "gi"), '']);
                 }
-            }
-            blacklist.push([/[_-]/gi, ' ']);
-            blacklist.push([/[^a-z0-9\s]/gi, '']);
-            if (data.date) {
-                blacklist.push([new RegExp(data.date.replaceAll('-', ''), "gi"), '']);
+                blacklist.push([/[_-]/gi, ' ']);
+                blacklist.push([/[^a-z0-9\s]/gi, '']);
+                if (data.date) {
+                    blacklist.push([new RegExp(data.date.replaceAll('-', ''), "gi"), '']);
+                }
             }
 
             const filterBlacklist = (s, regexes) => regexes.reduce((acc, [regex, repl]) => {
@@ -57,6 +62,8 @@
                     }
                 }
                 if (data.title && includeTitle) queryData.push(filterBlacklist(data.title, videoExtensionRegexes.concat(blacklist)));
+                if (data.movies && data.movies[0] && includeMovie) queryData.push(filterBlacklist(data.movies[0].movie.name, blacklist));
+                if (data.movies && data.movies[0] && includeSceneIndex) queryData.push(filterBlacklist("Scene "+ data.movies[0].scene_index, blacklist));
             }
 
             const queryValue = queryData.join(' ');
@@ -137,52 +144,66 @@
         if (!document.getElementById(queryEditConfigId)) {
             const configContainer = el.parentElement;
             const queryEditConfig = createElementFromHTML(`
-<div id="${queryEditConfigId}" class="col-md-6 mt-4">
+<form id="${queryEditConfigId}" class="col-md-6 mt-4">
 <h5>Query Edit Configuration</h5>
 <div>
     <div class="align-items-center form-group">
         <div class="form-check">
-            <input type="checkbox" id="query-edit-include-date" class="form-check-input" data-default="true">
-            <label title="" for="query-edit-include-date" class="form-check-label">Include Date</label>
+            <input type="checkbox" name="includeDate" class="form-check-input">
+            <label title="" for="includeDate" class="form-check-label">Include Date</label>
         </div>
         <small class="form-text">Toggle whether date is included in query.</small>
     </div>
     <div class="align-items-center form-group">
         <div class="form-check">
-            <input type="checkbox" id="query-edit-include-studio" class="form-check-input" data-default="true">
-            <label title="" for="query-edit-include-studio" class="form-check-label">Include Studio</label>
+            <input type="checkbox" name="includeStudio" class="form-check-input">
+            <label title="" for="includeStudio" class="form-check-label">Include Studio</label>
         </div>
         <small class="form-text">Toggle whether studio is included in query.</small>
     </div>
     <div class="align-items-center form-group">
         <div class="form-check">
-            <input type="radio" name="query-edit-include-performers" id="query-edit-include-performers-all" value="all" class="form-check-input" data-default="true">
-            <label title="" for="query-edit-include-performers-all" class="form-check-label mr-4">Include All Performers</label>
-            <input type="radio" name="query-edit-include-performers" id="query-edit-include-performers-female-only" value="female-only" class="form-check-input" data-default="false">
-            <label title="" for="query-edit-include-performers-female-only" class="form-check-label mr-4">Female Only</label>
-            <input type="radio" name="query-edit-include-performers" id="query-edit-include-performers-none" value="none" class="form-check-input" data-default="false">
-            <label title="" for="query-edit-include-performers-none" class="form-check-label">No Performers</label>
+            <input type="radio" name="includePerformers" value="all" class="form-check-input">
+            <label title="" for="includePerformers-all" class="form-check-label mr-4">Include All Performers</label>
+            <input type="radio" name="includePerformers" value="female-only" class="form-check-input">
+            <label title="" for="includePerformers-female-only" class="form-check-label mr-4">Female Only</label>
+            <input type="radio" name="includePerformers" value="none" class="form-check-input">
+            <label title="" for="includePerformers-none" class="form-check-label">No Performers</label>
         </div>
         <small class="form-text">Toggle whether performers are included in query.</small>
     </div>
     <div class="align-items-center form-group">
         <div class="form-check">
-            <input type="checkbox" id="query-edit-include-title" class="form-check-input" data-default="true">
-            <label title="" for="query-edit-include-title" class="form-check-label">Include Title</label>
+            <input type="checkbox" name="includeTitle" class="form-check-input">
+            <label title="" for="includeTitle" class="form-check-label">Include Title</label>
         </div>
         <small class="form-text">Toggle whether title is included in query.</small>
     </div>
     <div class="align-items-center form-group">
         <div class="form-check">
-            <input type="checkbox" id="query-edit-apply-blacklist" class="form-check-input" data-default="true">
-            <label title="" for="query-edit-apply-blacklist" class="form-check-label">Apply Blacklist</label>
+            <input type="checkbox" name="includeMovie" class="form-check-input">
+            <label title="" for="includeMovie" class="form-check-label">Include Movie</label>
+        </div>
+        <small class="form-text">Toggle whether movie name is included in query.</small>
+    </div>
+    <div class="align-items-center form-group">
+        <div class="form-check">
+            <input type="checkbox" name="includeSceneIndex" class="form-check-input">
+            <label title="" for="includeSceneIndex" class="form-check-label">Include Scene Index</label>
+        </div>
+        <small class="form-text">Toggle whether movie scene index is included in query.</small>
+    </div>
+    <div class="align-items-center form-group">
+        <div class="form-check">
+            <input type="checkbox" name="applyBlacklist" class="form-check-input">
+            <label title="" for="applyBlacklist" class="form-check-label">Apply Blacklist</label>
         </div>
         <small class="form-text">Toggle whether blacklist is applied to query.</small>
     </div>
     <div class="align-items-center form-group">
         <div class="form-check">
-            <input type="checkbox" id="query-edit-use-stashid" class="form-check-input" data-default="false">
-            <label title="" for="query-edit-use-stashid" class="form-check-label">Use StashID</label>
+            <input type="checkbox" name="useStashID" class="form-check-input">
+            <label title="" for="useStashID" class="form-check-label">Use StashID</label>
         </div>
         <small class="form-text">Toggle whether query is set to StashID if scene has one.</small>
     </div>
@@ -195,12 +216,24 @@
     });
 
     async function loadSettings() {
-        for (const input of document.querySelectorAll(`#${queryEditConfigId} input`)) {
-            input.checked = await stash.getValue(pluginName, input.id, input.dataset.default === 'true');
-            input.addEventListener('change', async () => {
-                await stash.setValue(pluginName, input.id, input.checked);
-            });
+        const form = document.getElementById('query-edit-config');
+        const values = await stash.getPluginSettings(pluginName) || {
+            "includeDate": "on",
+            "includeStudio": "on",
+            "includePerformers": "all",
+            "includeTitle": "on",
+            "applyBlacklist": "on",
+        };
+        for (const [ key, value ] of Object.entries(values) ) {
+            const field = form.elements.namedItem(key);
+            if(field) {
+                field.value = field.checked = value;
+            }
         }
+        form.addEventListener('change', async () => {
+            const values = Object.fromEntries(new FormData(form).entries());
+            await stash.setPluginSettings(pluginName, values);
+        });
     }
 
 })();

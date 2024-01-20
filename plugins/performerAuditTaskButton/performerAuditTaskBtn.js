@@ -11,7 +11,7 @@
                 const toolbar = document.querySelector(".btn-toolbar");
 
                 const newGroup = document.createElement('div');
-                newGroup.classList.add('mx-2', 'mb-2', await stash.getValue(pluginName, inputId, false) ? 'd-flex' : 'd-none');
+                newGroup.classList.add('mx-2', 'mb-2', await stash.getConfigValue(pluginName, inputId, false) ? 'd-flex' : 'd-none');
                 toolbar.appendChild(newGroup);
 
                 const auditButton = document.createElement("button");
@@ -31,10 +31,10 @@
         const settingsHeader = 'Show Audit Performer URLs Button';
         const settingsSubheader = 'Display audit performer urls button on performers page.';
         const checkbox = await stash.createSystemSettingCheckbox(el, settingsId, inputId, settingsHeader, settingsSubheader);
-        checkbox.checked = await stash.getValue(pluginName, inputId, false);
+        checkbox.checked = await stash.getConfigValue(pluginName, inputId, false);
         checkbox.addEventListener('change', async () => {
             const value = checkbox.checked;
-            await stash.setValue(pluginName, inputId, value);
+            await stash.updateConfigValue(pluginName, inputId, value);
         });
     });
 })();

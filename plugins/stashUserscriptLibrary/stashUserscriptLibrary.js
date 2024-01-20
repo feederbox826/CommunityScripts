@@ -60,6 +60,7 @@ class Stash extends EventTarget {
             }));
         });
         this.getVersion()
+        this.loadConfiguration()
         this.settingsCallbacks = [];
         this.remoteScenes = {};
         this.scenes = {};
@@ -79,6 +80,17 @@ class Stash extends EventTarget {
         const data = await this.callGQL(reqData);
         const versionString = data.data.version.version;
         this.version = versionString.substring(1).split('.').map(o => parseInt(o));
+    }
+    async loadConfiguration() {
+        const reqData = {
+            "query": `query Configuration() {
+                configuration {
+                    plugins
+                }
+            }`
+        };
+        const data = await this.callGQL(reqData);
+        this.configuration = data.data?.configuration?.plugins ?? {};
     }
     async callGQL(reqData) {
         const options = {
@@ -396,33 +408,29 @@ class Stash extends EventTarget {
         }
     }
     async getPluginSettings(pluginName) {
+        return this.configuration[pluginName];
+    }
+    async setPluginSettings(pluginName, settings) {
         const reqData = {
-            "operationName": "Configuration",
-            "variables": { "pluginID": pluginName },
-            "query": `query Configuration($pluginID: String!) {
-                configuration {
-                    plugins(include: [$pluginID])
-                }
+            "operationName": "ConfigurePlugin",
+            "variables": {
+                "plugin_id": pluginName,
+                "input": settings
+            },
+            "query": `mutation ConfigurePlugin($plugin_id: ID!, $input: Map!) {
+                configurePlugin(plugin_id: $plugin_id, input: $input)
             }`
         };
-        const result = await this.callGQL(reqData);
-        const settings = result.data.configuration.plugins?.[pluginName]
-        return settings
+        const data = await this.callGQL(reqData);
+        const pluginSettings = data.data?.configurePlugin;
+        if(pluginSettings) {
+            this.configuration[pluginName] = pluginSettings;
+        }
     }
     async updateConfigValue(pluginName, settingName, value) {
-        const existingSettings = await getPluginSettings(pluginName);
+        const existingSettings = await this.getPluginSettings(pluginName) ?? {};
         existingSettings[settingName] = value;
-        const reqData = {
-            "operationName": "UpdateConfigValue",
-            "variables": {
-                "pluginID": pluginName,
-                "settings": JSON.stringify(existingSettings)
-            },
-            "query": `mutation UpdateConfigValue($pluginID: String!, $settings: String!) {
-                updateConfigValue(pluginID: $pluginID, settings: $settings)
-            }`
-        };
-        return this.callGQL(reqData);
+        return this.setPluginSettings(pluginName, existingSettings);
     }
     async getConfigValue(pluginName, settingName, fallback) {
         const settings = await this.getPluginSettings(pluginName);

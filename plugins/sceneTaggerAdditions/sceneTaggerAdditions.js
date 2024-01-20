@@ -30,9 +30,9 @@
             performerNodes
         } = stash.parseSearchItem(searchItem);
 
-        const includeDuration = await stash.getValue(pluginName, 'additions-duration', true);
-        const includePath = await stash.getValue(pluginName, 'additions-path', true);
-        const includeUrl = await stash.getValue(pluginName, 'additions-url', true);
+        const includeDuration = await stash.getConfigValue(pluginName, 'additions-duration', true);
+        const includePath = await stash.getConfigValue(pluginName, 'additions-path', true);
+        const includeUrl = await stash.getConfigValue(pluginName, 'additions-url', true);
 
         const originalSceneDetails = searchItem.querySelector('.original-scene-details');
 
@@ -143,9 +143,9 @@
 
     async function loadSettings() {
         for (const input of document.querySelectorAll(`#${additionsConfigId} input`)) {
-            input.checked = await stash.getValue(pluginName, input.id, input.dataset.default === 'true');
+            input.checked = await stash.getConfigValue(pluginName, input.id, input.dataset.default === 'true');
             input.addEventListener('change', async () => {
-                await stash.setValue(pluginName, input.id, input.checked);
+                await stash.updateConfigValue(pluginName, input.id, input.checked);
             });
         }
     }

@@ -88,7 +88,7 @@
     });
 
     async function loadSettings() {
-        delay = await stash.getValue(pluginName, 'batch-create-delay', DEFAULT_DELAY);
+        delay = await stash.getConfigValue(pluginName, 'batch-create-delay', DEFAULT_DELAY);
         const input = document.querySelector("input#batch-search-delay");
         input.value = delay;
         input.addEventListener('change', async () => {
@@ -96,7 +96,7 @@
             value = isNaN(value) ? DEFAULT_DELAY : value;
             input.value = value;
             delay = value;
-            await stash.setValue(pluginName, 'batch-create-delay', value);
+            await stash.updateConfigValue(pluginName, 'batch-create-delay', value);
         });
     }
 
